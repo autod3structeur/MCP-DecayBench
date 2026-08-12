@@ -1,4 +1,4 @@
-# mcp-poison-bench
+# MCP-DecayBench
 
 **A labeled benchmark for MCP security scanners — with hard negatives that measure whether a scanner cries wolf.**
 
@@ -8,7 +8,7 @@ nobody can currently answer "is scanner A better than scanner B?" with a number.
 Field reports show these tools flag legitimate behavior as vulnerable, but there
 is no standard corpus that quantifies it.
 
-`mcp-poison-bench` is that corpus and the harness to score against it.
+`MCP-DecayBench` is that corpus and the harness to score against it.
 
 ## What makes it different
 
