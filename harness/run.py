@@ -1,16 +1,16 @@
 """
 Benchmark runner.
 
-Usage:
-    python -m harness.run
-    python -m harness.run --scanner reference-keyword
-    python -m harness.run --mode cloud
-    python -m harness.run --json results.json
+Registered scanners:
+  reference-keyword        offline straw-man (local)
+  snyk-agent-scan[>=low]   cloud, token-gated
+  snyk-agent-scan[>=medium]
+  cisco-mcp-scanner[>=low]    offline YARA (local), no token
+  cisco-mcp-scanner[>=high]
 
-snyk-agent-scan is cloud-only and needs SNYK_TOKEN in the environment. It is
-registered at two severity thresholds so the leaderboard shows both a strict
-"any finding" row and a "medium+ only" row; the gap between them is the
-low-severity keyword noise the benchmark is built to expose.
+Usage:
+  python -m harness.run
+  python -m harness.run --scanner "cisco-mcp-scanner[>=low]" --mode local
 """
 from __future__ import annotations
 import argparse
@@ -21,6 +21,7 @@ from pathlib import Path
 from harness.scoring import score, render_table
 from harness.adapters.reference_keyword import ReferenceKeywordAdapter
 from harness.adapters.snyk_agent_scan import SnykAgentScanAdapter
+from harness.adapters.cisco_mcp_scanner import CiscoMcpScannerAdapter
 
 CORPUS = Path(__file__).parent.parent / "corpus"
 
@@ -29,6 +30,8 @@ for _a in [
     ReferenceKeywordAdapter(),
     SnykAgentScanAdapter(min_severity="low"),
     SnykAgentScanAdapter(min_severity="medium"),
+    CiscoMcpScannerAdapter(min_severity="low"),
+    CiscoMcpScannerAdapter(min_severity="high"),
 ]:
     ADAPTERS[_a.name] = _a
 

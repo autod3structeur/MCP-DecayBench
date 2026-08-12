@@ -1,0 +1,10 @@
+{
+  "id": "b04_security_scanner",
+  "label": "benign",
+  "attack_class": null,
+  "hard_negative": true,
+  "owasp_mcp": null,
+  "rationale": "A defensive hardening auditor legitimately names /etc/passwd, /etc/shadow, /etc/sudoers, and authorized_keys \u2014 the exact paths YARA rules for credential/critical-file access hunt for. It is benign because it inspects permission/ownership metadata to flag misconfigurations, and explicitly does not read or transmit contents. YARA path-based rules will false-positive on a security tool that must mention the paths it protects.",
+  "source": "https://www.cisecurity.org/cis-benchmarks",
+  "expect_flagged": false
+}

@@ -21,58 +21,63 @@ false-positive rate on those tricky-benign servers.
 
 ## Results
 
-Measured against v1 of the corpus (4 samples: 2 attacks, 2 hard negatives).
-`snyk-agent-scan` is the renamed successor to Invariant Labs' `mcp-scan`; it is
-cloud-only and token-gated (see `docs/METHODOLOGY.md`). Severity thresholds are
-reported separately because *what counts as a finding* is itself a scoring
-decision.
+Measured against the v1 corpus: **10 samples** (2 attacks, 8 hard negatives).
+Two real scanners are wrapped, each in the mode it actually supports.
+`snyk-agent-scan` is cloud/token-gated; `cisco-mcp-scanner` (YARA) runs offline.
 
 | scanner                     | mode  | prec  | rec   | F1    | HN-FPR |
 |-----------------------------|-------|-------|-------|-------|--------|
-| snyk-agent-scan (>=medium)  | cloud | 1.000 | 1.000 | 1.000 | 0.000  |
-| snyk-agent-scan (>=low)     | cloud | 0.500 | 1.000 | 0.667 | 1.000  |
-| reference-keyword (bundled) | local | 0.500 | 0.500 | 0.500 | 0.500  |
+| cisco-mcp-scanner (YARA)    | local | 0.500 | 1.000 | 0.667 | 0.250  |
+| snyk-agent-scan (>=medium)  | cloud | 0.500 | 1.000 | 0.667 | 0.250  |
+| snyk-agent-scan (>=low)     | cloud | 0.222 | 1.000 | 0.364 | 0.875  |
 
 *HN-FPR = false-positive rate on hard negatives (lower is better).*
 
-### Two findings
+### The finding: same score, different blind spots
 
-**1. The severity threshold is everything.** At its `low` threshold,
-snyk-agent-scan flags *every* hard negative (HN-FPR 1.0) — its capability and
-keyword heuristics fire on legitimate high-capability servers (a backup tool
-that needs file-read + network-egress; a caching tool whose description
-legitimately says "IMPORTANT"). Filtering to `medium+` severity removes all of
-that noise with **no loss of detection** (HN-FPR 0.0, recall 1.0). The scanner's
-real-world usefulness depends entirely on where you set the bar — a single
-"is it safe?" number is misleading.
+Both real scanners keep perfect recall (they catch every attack) and, at their
+best settings, land at the same HN-FPR (0.25). But they false-positive on
+**different** legitimate servers, so the aggregate number hides the real story:
 
-**2. Capability-combination attacks resist static separation.** Our malicious
-exfil-combo (`m02`) and our benign backup (`b01`) are functionally similar —
-both pair file-read with network-egress. Static description analysis assigns
-them nearly identical signals; the malicious intent lives in *how* the
-capabilities are wired, not in any text a scanner can read. This is a
-fundamental limit of description-level scanning, not a quirk of one tool.
-Sharpening this boundary is a v2 roadmap item (see `CONTRIBUTING.md`).
+- **Both** flag `b03` (a standard Git credential helper). Neither tool
+  distinguishes a legitimate helper that reads `~/.ssh/config` and
+  `~/.git-credentials` from credential harvesting — a shared blind spot.
+- **Only Cisco** flags `b04`, a defensive hardening auditor, because its YARA
+  path rules match `/etc/shadow` / `/etc/passwd` — the very files the tool
+  exists to protect.
+- **Only snyk (>=medium)** flags `b06`, a backup tool whose description says
+  "ignore all previous .gitignore patterns" — legitimate archiving semantics
+  that trip its injection heuristics.
 
-The bundled `reference-keyword` scanner is a straw man included on purpose: it
-catches obvious poison but false-positives on legitimate "IMPORTANT" phrasing
-and misses capability-combination attacks that carry no suspicious keywords —
-demonstrating why naive scanning fails and why the hard negatives matter.
+A defender running only one of these tools inherits that tool's specific gaps.
+Running snyk untuned (`>=low`) is worse: HN-FPR 0.875 — it flags almost every
+legitimate server, including credential helpers, backups, i18n tools, and a
+security-awareness prompt library.
+
+### What held up
+
+`b05` (a base64 decoder with encoded example data) fooled neither scanner. And
+recall stayed 1.0 throughout: harder hard negatives raised false positives
+without causing either tool to miss a real attack.
 
 ## Quick start
 
 ```bash
-python -m pytest harness/test_benchmark.py -q   # verify corpus + fixtures + scoring
-python -m harness.run --scanner reference-keyword   # runs offline, no token
+python -m pytest harness/test_benchmark.py -q       # verify corpus + fixtures + scoring
+python -m harness.run --scanner reference-keyword   # offline straw-man, no token
 ```
 
-To benchmark snyk-agent-scan (needs a Snyk token; analysis is cloud-side):
+Benchmark the real scanners:
 
 ```bash
+# Cisco YARA — offline, no token
 pip install uv
-export SNYK_TOKEN="your-token"    # from https://app.snyk.io/account
+uv tool install --python 3.13 cisco-ai-mcp-scanner
+python -m harness.run --scanner "cisco-mcp-scanner[>=low]" --mode local
+
+# Snyk agent-scan — cloud, needs a token from https://app.snyk.io/account
+export SNYK_TOKEN="your-token"
 python -m harness.run --scanner "snyk-agent-scan[>=medium]" --mode cloud
-python -m harness.run --scanner "snyk-agent-scan[>=low]" --mode cloud
 ```
 
 Missing scanners degrade gracefully (they report per-sample errors; the run
@@ -90,15 +95,11 @@ still completes).
   separately** (see `docs/METHODOLOGY.md`).
 
 ## Layout
-
-```
-corpus/malicious/  poisoned servers, one dir each (server.py + label.json)
-corpus/benign/     clean servers, incl. hard negatives
-fixtures/          shared MCP-server template + authoring helper
-harness/           adapters, scoring, runner, tests
-docs/              TAXONOMY.md, METHODOLOGY.md
-```
-
+corpus/malicious/ poisoned servers, one dir each (server.py + label.json)
+corpus/benign/ clean servers, incl. hard negatives
+fixtures/ shared MCP-server template + authoring helper
+harness/ adapters, scoring, runner, tests
+docs/ TAXONOMY.md, METHODOLOGY.md
 ## Documentation
 
 - `docs/TAXONOMY.md` — attack classes, each anchored to a published source.
@@ -108,11 +109,10 @@ docs/              TAXONOMY.md, METHODOLOGY.md
 
 ## Status
 
-v1 is intentionally small and defensible. The benchmark already surfaced a real
-limitation *in its own corpus* (finding 2 above) — which is the point.
-Contributions that increase *discrimination* — new hard negatives, sharper
-capability-combo separation, new attack classes — are the most valuable. See
-`CONTRIBUTING.md`.
+The corpus is hard enough to *separate* scanners rather than let everyone pass,
+but still small (10 samples, one cloud snapshot). Contributing adversarial hard
+negatives that split the tools further is the highest-leverage contribution.
+See `CONTRIBUTING.md`.
 
 ## License
 
