@@ -1,3 +1,4 @@
+[![ci](https://github.com/autod3structeur/MCP-DecayBench/actions/workflows/ci.yml/badge.svg)](https://github.com/autod3structeur/MCP-DecayBench/actions/workflows/ci.yml)
 # mcp-poison-bench
 
 **A labeled benchmark for MCP security scanners — with hard negatives that measure whether a scanner cries wolf.**
