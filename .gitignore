@@ -5,3 +5,12 @@ results*.json
 .pytest_cache/
 .venv/
 LAUNCH.md
+
+*.json
+!corpus/**/label.json
+c_low.json
+cisco_high.json
+cisco_low.json
+s_low.json
+s_med.json
+results*.json
