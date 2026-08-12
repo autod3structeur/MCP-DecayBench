@@ -1,7 +1,7 @@
 # Contributing
 
-The most valuable contribution is a **new hard negative** — a benign MCP server
-that plausibly trips existing scanners — or a **new attack class** with a benign
+The most valuable contribution is a **new hard negative** - a benign MCP server
+that plausibly trips existing scanners - or a **new attack class** with a benign
 twin. Raw sample count is not the goal; discrimination is.
 
 ## Adding a sample
@@ -9,7 +9,7 @@ twin. Raw sample count is not the goal; discrimination is.
 1. Pick a directory: `corpus/malicious/<id>/` or `corpus/benign/<id>/`.
 2. Author `server.py`. Start from `fixtures/server_template.py` (or use
    `fixtures/make_sample.py`) and edit the `TOOLS` / `PROMPTS` / `RESOURCES`
-   block. The server must run and complete an MCP handshake — CI checks this.
+   block. The server must run and complete an MCP handshake - CI checks this.
 3. Write `label.json` following `corpus/SCHEMA.md`. **The `rationale` is
    mandatory and load-bearing**, especially for hard negatives: explain why the
    label is correct in terms someone could argue with.

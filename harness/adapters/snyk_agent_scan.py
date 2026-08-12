@@ -87,7 +87,7 @@ class SnykAgentScanAdapter(ScannerAdapter):
                                   error="uvx/snyk-agent-scan not available")
 
             flagged, ok, err = self._interpret(proc.stdout, self.min_severity)
-            # keep FULL raw for debugging (not truncated) — analysis is cloud so
+            # keep FULL raw for debugging (not truncated) - analysis is cloud so
             # there is nothing sensitive in the output itself
             return ScanResult(sample_dir.name, flagged if ok else False, mode,
                               raw=proc.stdout or proc.stderr,

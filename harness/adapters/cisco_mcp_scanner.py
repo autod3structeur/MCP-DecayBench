@@ -3,7 +3,7 @@ Adapter for Cisco AI Defense's mcp-scanner (YARA static/offline mode).
 
 Unlike snyk-agent-scan, Cisco's YARA analyzer runs fully offline: no token, no
 network, deterministic. It populates the benchmark's LOCAL column. It also uses
-a different input shape — static mode reads a pre-generated tools JSON file
+a different input shape - static mode reads a pre-generated tools JSON file
 (`{"tools": [...]}`) rather than a client config that launches servers.
 
 CLI (confirmed, v4.x):

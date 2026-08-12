@@ -19,7 +19,7 @@ OWASP MCP Top 10 mapping exists it is noted.
 ## The hard-negative counterparts
 
 For the benchmark to measure anything, most attack classes need a **benign twin**
-— a legitimate server that superficially resembles the attack but is genuinely
+- a legitimate server that superficially resembles the attack but is genuinely
 safe. These live in `corpus/benign/` with `hard_negative: true`. Examples:
 
 - A backup tool that legitimately needs *both* file read and network access
@@ -31,4 +31,4 @@ safe. These live in `corpus/benign/` with `hard_negative: true`. Examples:
 - Two unrelated tools that happen to share a common verb name across servers
   (looks like `tool_shadowing`).
 
-If a scanner flags these, that is a false positive — and the whole point.
+If a scanner flags these, that is a false positive - and the whole point.

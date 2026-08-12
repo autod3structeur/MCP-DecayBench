@@ -11,7 +11,7 @@ corpus/<label>/<sample_id>/
 
 The scanner under test is pointed at a generated config that launches
 `server.py`, connects over stdio, and retrieves the tool/prompt/resource
-definitions — i.e. the tools are tested the *real* way, not as inert JSON.
+definitions - i.e. the tools are tested the *real* way, not as inert JSON.
 
 ## `label.json` fields
 

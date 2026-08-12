@@ -7,13 +7,13 @@ down and every label is anchored to a source.
 ## What is measured
 
 Each MCP server sample is run through a scanner, whose output is reduced to one
-boolean — *did it raise a finding on this server?* — and compared to ground
+boolean - *did it raise a finding on this server?* - and compared to ground
 truth. See `corpus/SCHEMA.md` for the exact contract.
 
 Reported metrics:
 
 - **Precision / Recall / F1** over the whole corpus.
-- **Hard-negative false-positive rate (HN-FPR)** — the fraction of deliberately
+- **Hard-negative false-positive rate (HN-FPR)** - the fraction of deliberately
   tricky *benign* servers a scanner wrongly flags. This is the headline number.
   Field reports of existing scanners describe them flagging intended behavior as
   vulnerable and producing findings that "reflect intended behavior, not
@@ -22,14 +22,14 @@ Reported metrics:
 ## Why hard negatives are the core
 
 A corpus of obviously-malicious vs obviously-clean servers measures almost
-nothing — every scanner scores near 100%. Discrimination comes from **benign
+nothing - every scanner scores near 100%. Discrimination comes from **benign
 servers that look malicious**: a backup tool that legitimately needs file-read
 plus network-egress (resembles an exfiltration toxic-flow), a caching tool whose
 description legitimately says "ignore cached copy / IMPORTANT" (resembles a
 hidden-instruction payload), config that legitimately changes across versions
 (resembles a rug pull). Each hard negative has a written rationale explaining
 why it is genuinely safe. If a scanner author disputes a label, the rationale is
-the thing to argue with — and that argument is the benchmark working as intended.
+the thing to argue with - and that argument is the benchmark working as intended.
 
 ## Local vs cloud mode
 
@@ -37,9 +37,9 @@ Some scanners have two modes: a local/offline path and a cloud path that sends
 tool metadata to a vendor API for classification. These differ in accuracy,
 determinism, and privacy. We run and report **both, in separate columns**:
 
-- **local** — deterministic, offline, reproducible. The headline reproducible
+- **local** - deterministic, offline, reproducible. The headline reproducible
   number. Note this is often the *weaker* configuration of a given tool.
-- **cloud** — reflects how the tool is used in practice, but is
+- **cloud** - reflects how the tool is used in practice, but is
   non-deterministic (the vendor model changes over time) and transmits corpus
   tool metadata to a third party. Cloud results are timestamped and should be
   treated as a snapshot, not a reproducible constant.
@@ -124,7 +124,7 @@ server is "flagged" depends on the severity threshold. We report both `>=low`
 and `>=medium`; the gap between them is the signal-vs-noise story.
 
 ### Observed result (v1 corpus)
-At `>=low`, snyk flags both hard negatives — but on capability heuristics
+At `>=low`, snyk flags both hard negatives - but on capability heuristics
 (W018/W020 on the legit backup; W001/W016/W018 on the legit cache), not only
 keywords. At `>=medium` those drop and precision/recall/F1 all reach 1.0. The
 malicious exfil-combo and benign backup produce near-identical low-severity
