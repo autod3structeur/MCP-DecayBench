@@ -1,0 +1,10 @@
+{
+  "id": "b01_legit_backup",
+  "label": "benign",
+  "attack_class": null,
+  "hard_negative": true,
+  "owasp_mcp": null,
+  "rationale": "A real backup tool legitimately needs BOTH file read and network egress \u2014 the same capability pairing that makes m02_exfil_combo malicious. The difference is intent and constraint: the paths are user-selected, the destination is the user's own pre-configured bucket, and the description is transparent about why both capabilities are required. A scanner that flags any read+egress pairing as a 'toxic flow' will false-positive here. This is the exact case Cisco's scanner was reported to over-flag.",
+  "source": "https://appsecsanta.com/research/mcp-server-security-audit-2026",
+  "expect_flagged": false
+}
