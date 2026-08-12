@@ -1,8 +1,6 @@
-HEAD
-# MCP-DecayBench
 [![ci](https://github.com/autod3structeur/MCP-DecayBench/actions/workflows/ci.yml/badge.svg)](https://github.com/autod3structeur/MCP-DecayBench/actions/workflows/ci.yml)
-# mcp-poison-bench
-22a087591fa73b300a024dcbe03c30c2db4074fc
+
+# MCP-DecayBench
 
 **A labeled benchmark for MCP security scanners — with hard negatives that measure whether a scanner cries wolf.**
 
@@ -21,35 +19,60 @@ benign MCP servers deliberately crafted to *look* malicious, so a scanner's
 real-world noise is measurable. The headline metric is **HN-FPR** — the
 false-positive rate on those tricky-benign servers.
 
-```
-scanner              mode     prec    rec     F1  HN-FPR  err
--------------------------------------------------------------
-reference-keyword    local  0.500 0.500 0.500 0.500    0
-mcp-scan             local    ...   ...   ...   ...    0
-mcp-scan             cloud    ...   ...   ...   ...    0
+## Results
 
-HN-FPR = false-positive rate on hard negatives (lower is better).
-```
+Measured against v1 of the corpus (4 samples: 2 attacks, 2 hard negatives).
+`snyk-agent-scan` is the renamed successor to Invariant Labs' `mcp-scan`; it is
+cloud-only and token-gated (see `docs/METHODOLOGY.md`). Severity thresholds are
+reported separately because *what counts as a finding* is itself a scoring
+decision.
+
+| scanner                     | mode  | prec  | rec   | F1    | HN-FPR |
+|-----------------------------|-------|-------|-------|-------|--------|
+| snyk-agent-scan (>=medium)  | cloud | 1.000 | 1.000 | 1.000 | 0.000  |
+| snyk-agent-scan (>=low)     | cloud | 0.500 | 1.000 | 0.667 | 1.000  |
+| reference-keyword (bundled) | local | 0.500 | 0.500 | 0.500 | 0.500  |
+
+*HN-FPR = false-positive rate on hard negatives (lower is better).*
+
+### Two findings
+
+**1. The severity threshold is everything.** At its `low` threshold,
+snyk-agent-scan flags *every* hard negative (HN-FPR 1.0) — its capability and
+keyword heuristics fire on legitimate high-capability servers (a backup tool
+that needs file-read + network-egress; a caching tool whose description
+legitimately says "IMPORTANT"). Filtering to `medium+` severity removes all of
+that noise with **no loss of detection** (HN-FPR 0.0, recall 1.0). The scanner's
+real-world usefulness depends entirely on where you set the bar — a single
+"is it safe?" number is misleading.
+
+**2. Capability-combination attacks resist static separation.** Our malicious
+exfil-combo (`m02`) and our benign backup (`b01`) are functionally similar —
+both pair file-read with network-egress. Static description analysis assigns
+them nearly identical signals; the malicious intent lives in *how* the
+capabilities are wired, not in any text a scanner can read. This is a
+fundamental limit of description-level scanning, not a quirk of one tool.
+Sharpening this boundary is a v2 roadmap item (see `CONTRIBUTING.md`).
 
 The bundled `reference-keyword` scanner is a straw man included on purpose: it
-catches obvious poison but false-positives on legitimate "IMPORTANT / ignore
-cached copy" phrasing and misses capability-combination attacks that carry no
-suspicious keywords — demonstrating exactly why naive scanning fails and why the
-hard negatives matter.
+catches obvious poison but false-positives on legitimate "IMPORTANT" phrasing
+and misses capability-combination attacks that carry no suspicious keywords —
+demonstrating why naive scanning fails and why the hard negatives matter.
 
 ## Quick start
 
 ```bash
-pip install pytest
 python -m pytest harness/test_benchmark.py -q   # verify corpus + fixtures + scoring
-python -m harness.run                           # run the leaderboard
+python -m harness.run --scanner reference-keyword   # runs offline, no token
 ```
 
-To benchmark a real scanner, install it and re-run:
+To benchmark snyk-agent-scan (needs a Snyk token; analysis is cloud-side):
 
 ```bash
-pip install mcp-scan
-python -m harness.run --scanner mcp-scan
+pip install uv
+export SNYK_TOKEN="your-token"    # from https://app.snyk.io/account
+python -m harness.run --scanner "snyk-agent-scan[>=medium]" --mode cloud
+python -m harness.run --scanner "snyk-agent-scan[>=low]" --mode cloud
 ```
 
 Missing scanners degrade gracefully (they report per-sample errors; the run
@@ -85,9 +108,11 @@ docs/              TAXONOMY.md, METHODOLOGY.md
 
 ## Status
 
-v1 is intentionally small and defensible. Contributions that increase
-*discrimination* — new hard negatives and new attack classes — are the most
-valuable. See `CONTRIBUTING.md`.
+v1 is intentionally small and defensible. The benchmark already surfaced a real
+limitation *in its own corpus* (finding 2 above) — which is the point.
+Contributions that increase *discrimination* — new hard negatives, sharper
+capability-combo separation, new attack classes — are the most valuable. See
+`CONTRIBUTING.md`.
 
 ## License
 

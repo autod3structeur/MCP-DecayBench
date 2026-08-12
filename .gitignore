@@ -3,3 +3,4 @@ __pycache__/
 .mcp-scan
 results*.json
 .pytest_cache/
+.venv/
